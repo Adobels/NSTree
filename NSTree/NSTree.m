@@ -151,7 +151,7 @@
     @property (nonatomic, strong) NSTreeNode *root;
     @property (nonatomic, assign) int nodeMinimum;
     @property (nonatomic, assign, readwrite) int nodeCapacity; 
-    @property (nonatomic, assign, readwrite) int count;
+    @property (nonatomic, assign, readwrite) NSUInteger count;
     
     // Cache and flag for quick access
     @property (nonatomic, assign, readwrite) bool cacheOutdated; 
@@ -273,7 +273,7 @@
             for (int j = 0; j < fillCount && i < children.count - 1; ++j, ++i) 
             {
                 child = children[i];  
-                int index = child.data.count - 1;
+                NSUInteger index = child.data.count - 1;
                                
                 // Add child
                 [parent.children addObject:child];
@@ -455,13 +455,9 @@
 }
 
 /** @brief Returns object at index, or nil if none / out of bounds */
-- (id)objectAtIndex:(int)index
+- (id)objectAtIndex:(NSUInteger)index
 {
-    // Insanity checks
-    if (index < 0) {
-        return nil;
-    }
-   
+
     // Check cache & rebuild if necessary
     if (!self.cache || self.cacheOutdated) {
         [self rebuildCache];
@@ -504,7 +500,7 @@
     }
    
     // Find index where we should put it, and add it
-    int index = [node.data indexOfObject:object 
+    NSUInteger index = [node.data indexOfObject:object
         inSortedRange:NSMakeRange(0, node.data.count) 
         options:NSBinarySearchingInsertionIndex 
         usingComparator:^NSComparisonResult(id obj1, id obj2) {
@@ -559,7 +555,7 @@
 //    NSLog(@"Removing object %@ from node %@", object, node);
     
     // Get index to remove from
-    int index = [node indexOfDataObject:object];
+    NSUInteger index = [node indexOfDataObject:object];
     if (index == NSNotFound) {
         NSLog(@"Warning! Could not find index of object for removal: %@", object);
         return false;
@@ -597,7 +593,7 @@
     }
     
     // Search for item in node data
-    int index = [node.data indexOfObject:object 
+    NSUInteger index = [node.data indexOfObject:object
         inSortedRange:NSMakeRange(0, node.data.count) 
         options:NSBinarySearchingInsertionIndex 
             | NSBinarySearchingFirstEqual
@@ -606,7 +602,7 @@
         }];
     
     // If within bounds of data (note the <= count due to subtree indexing)
-    if (index >= 0 && index <= node.data.count) 
+    if (index <= node.data.count)
     {
         // Check if item is equal at index 
         if (index < node.data.count && [node.data[index] compare:object] == NSOrderedSame) {
@@ -632,7 +628,7 @@
 //    NSLog(@"Get: %@ in %@", object, node);
     
     // Search for item in node data
-    int index = [node.data indexOfObject:object 
+    NSUInteger index = [node.data indexOfObject:object
         inSortedRange:NSMakeRange(0, node.data.count) 
         options:NSBinarySearchingInsertionIndex 
             | NSBinarySearchingFirstEqual
@@ -641,7 +637,7 @@
         }];
     
     // If within bounds of data (note the <= count due to subtree indexing)
-    if (index >= 0 && index <= node.data.count) 
+    if (index <= node.data.count)
     {
         // Search subtree (don't terminate early on find because it's worth finding and deleting from leaf node to prevent restructuring)
         NSTreeNode *child = nil;
@@ -671,7 +667,7 @@
     if (node.children.count)
     {
         // Search for item in node data
-        int index = [node.data indexOfObject:object 
+        NSUInteger index = [node.data indexOfObject:object
             inSortedRange:NSMakeRange(0, node.data.count) 
             options:NSBinarySearchingInsertionIndex 
                 | NSBinarySearchingFirstEqual 
@@ -680,7 +676,7 @@
             }];
         
         // If within bounds of children
-        if (index >= 0 && index < node.children.count) {
+        if (index < node.children.count) {
             return [self getLeafNodeForObject:object 
                                        inNode:node.children[index]];  
         } else {
@@ -816,15 +812,15 @@
 
         // Create right node to be efficient about removing from arrays
         NSTreeNode *newRightNode = [[NSTreeNode alloc] initWithParent:node.parent];
-        int middle = node.data.count / 2;
-        int childIndex = middle + 1;
+        NSUInteger middle = node.data.count / 2;
+        NSUInteger childIndex = middle + 1;
         id object = node.data[middle];
 
         // Iterate through data & children from middle + 1 and add to new node
-        for (int i = childIndex; i < node.data.count; ++i) {
+        for (NSUInteger i = childIndex; i < node.data.count; ++i) {
             [newRightNode.data addObject:node.data[i]];
         }
-        for (int i = childIndex; i < node.children.count; ++i) {
+        for (NSUInteger i = childIndex; i < node.children.count; ++i) {
             [newRightNode.children addObject:node.children[i]];
             [node.children[i] setParent:newRightNode]; 
         } 
@@ -913,21 +909,21 @@
     }
     
     // Get index of node in children array of parent
-    int indexOfChild = [node.parent indexOfChildNode:node];
+    NSUInteger indexOfChild = [node.parent indexOfChildNode:node];
     if (indexOfChild == NSNotFound) {
         NSLog(@"Warning! Could not find index of child in parent: %@", node);
         return;
     }
     
     // Insert parent data that is next to the node
-    int indexOfParentData = indexOfChild - direction;
-    int indexOfInsert = (direction ? 0 : node.data.count);
+    NSUInteger indexOfParentData = indexOfChild - direction;
+    NSUInteger indexOfInsert = (direction ? 0 : node.data.count);
     [node.data insertObject:node.parent.data[indexOfParentData] 
                     atIndex:indexOfInsert];
     
     // Replace parent data with data from sibling
     NSTreeNode *sibling = (direction ? node.previous : node.next);
-    int indexOfRemove = (direction ? sibling.data.count - 1 : 0); 
+    NSUInteger indexOfRemove = (direction ? sibling.data.count - 1 : 0);
     [node.parent.data replaceObjectAtIndex:indexOfParentData 
                                 withObject:sibling.data[indexOfRemove]];
     [sibling.data removeObjectAtIndex:indexOfRemove];
@@ -983,7 +979,7 @@
     
     // Find index of separator object in parent
     parent = leftNode.parent;
-    int index = [parent indexOfChildNode:leftNode];
+    NSUInteger index = [parent indexOfChildNode:leftNode];
     
     // Transfer data & children over from parent / right node
     [leftNode.data addObject:parent.data[index]];

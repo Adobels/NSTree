@@ -66,7 +66,7 @@ typedef enum {
 typedef bool (^NSTreeTraverseBlock)(NSTreeNode *node, id data, id extra);
 
 @interface NSTree : NSObject<NSFastEnumeration, NSCopying>
-    @property (nonatomic, assign, readonly) int count;
+    @property (nonatomic, assign, readonly) NSUInteger count;
     @property (nonatomic, assign, readonly) int nodeCapacity; 
     @property (nonatomic, assign, readonly) bool cacheOutdated;  
 
@@ -116,7 +116,7 @@ typedef bool (^NSTreeTraverseBlock)(NSTreeNode *node, id data, id extra);
     - (NSString *)printTree;
 
     /** @brief Returns object at index, or nil if none / out of bounds */
-    - (id)objectAtIndex:(int)index;
+    - (id)objectAtIndex:(NSUInteger)index;
 
     /** @brief Traverse the tree in sorted order while executing block on every element
         @param block Traversal block to be called on data as we traverse 
